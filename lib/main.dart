@@ -1,7 +1,132 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 void main() {
   runApp(const MyApp());
+}
+
+class ListItem extends StatelessWidget {
+  final IconData iconData;
+  final String itemName;
+  final String price;
+  const ListItem({
+    super.key,
+    required this.iconData,
+    required this.itemName,
+    required this.price,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(iconData),
+      title: Text(itemName),
+      subtitle: Text(price),
+      trailing: ActionItem(),
+    );
+  }
+}
+
+class ActionItem extends StatefulWidget {
+  const ActionItem({super.key});
+
+  @override
+  State<ActionItem> createState() => _ActionItemState();
+}
+
+class _ActionItemState extends State<ActionItem> {
+  int counter = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text("$counter"),
+        IconButton(
+          onPressed: () {
+            setState(() {});
+            counter++;
+          },
+          icon: Icon(Icons.add),
+        ),
+      ],
+    );
+  }
+}
+
+class TipSelector extends StatefulWidget {
+  const TipSelector({super.key});
+
+  @override
+  State<TipSelector> createState() => _TipSelectorState();
+}
+
+class _TipSelectorState extends State<TipSelector> {
+  bool addTip = false;
+  int selectedTip = 10;
+  List<int> tipOptions = [10, 15, 20, 25];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SwitchListTile(
+          title: Text("Add a tip?"),
+          value: addTip,
+          onChanged: (value) {
+            setState(() {
+              addTip = value;
+            });
+          },
+        ),
+        if (addTip)
+          Wrap(
+            spacing: 8,
+            children: tipOptions.map((tip) {
+              return ChoiceChip(
+                label: Text("$tip%"),
+                selected: selectedTip == tip,
+                onSelected: (selected) {
+                  setState(() {
+                    selectedTip = tip;
+                  });
+                },
+              );
+            }).toList(),
+          ),
+      ],
+    );
+  }
+}
+
+class ConfirmSelection extends StatelessWidget {
+  const ConfirmSelection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text("Order Confirmed"),
+              content: Text("Your checkout order has been submitted"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  }, 
+                  child: Text("Dismiss"))
+              ]
+            );
+          });
+      }, 
+      child: Text("Confirm Order"));
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -28,9 +153,9 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: .fromSeed(seedColor: Colors.blue),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Checkout'),
     );
   }
 }
@@ -54,19 +179,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -85,37 +197,37 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: ListView(
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            Card(
+              child: Column(
+                children: [
+                  ListItem(
+                    iconData: Icons.local_pizza,
+                    itemName: "Pizza",
+                    price: "15.99",
+                  ),
+                  ListItem(
+                    iconData: Icons.local_cafe,
+                    itemName: "Coffee",
+                    price: "3.99",
+                  ),
+                  ListItem(
+                    iconData: Icons.icecream,
+                    itemName: "Ice Cream",
+                    price: "5.99",
+                  ),
+                ],
+              ),
             ),
+            SizedBox(height: 15),
+            Card(child: TipSelector()),
+            SizedBox(height: 15),
+            ConfirmSelection(),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
