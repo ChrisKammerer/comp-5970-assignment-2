@@ -41,9 +41,12 @@ class ListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(iconData),
-      title: Text(itemName),
-      subtitle: Text(price),
+      leading: CircleAvatar(
+        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        child: Icon(iconData, color: Theme.of(context).colorScheme.primary, size: 26),
+      ),
+      title: Text(itemName, style: TextStyle(fontFamily: 'Ramen', fontSize: 22, fontWeight: FontWeight.w600)),
+      subtitle: Text(price, style: TextStyle(fontFamily: 'Ramen', fontSize: 18, fontWeight: FontWeight.w400)),
       trailing: ActionItem(
         quantity: quantity,
         onQuantityChanged: onQuantityChanged,
@@ -67,21 +70,26 @@ class ActionItem extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(
-          onPressed: () {
-            if (quantity > 0) {
-              onQuantityChanged(quantity - 1);
-            }
-          },
-          icon: Icon(Icons.remove),
-        ),
-        Text("$quantity"),
-        IconButton(
+        CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          child: IconButton(
+            onPressed: () {
+              if (quantity > 0) {
+                onQuantityChanged(quantity - 1);
+              }
+            },
+            icon: Icon(Icons.remove),
+          )),
+        SizedBox(width: 12),
+        Text("$quantity", style: TextStyle(fontFamily: 'Ramen', fontSize: 18, fontWeight: FontWeight.w500)),
+        SizedBox(width: 12),
+        CircleAvatar(backgroundColor: Theme.of(context).colorScheme.primaryContainer, 
+          child: IconButton(
           onPressed: () {
             onQuantityChanged(quantity + 1);
           },
           icon: Icon(Icons.add),
-        ),
+        ),),
       ],
     );
   }
@@ -119,11 +127,15 @@ class _TipSelectorState extends State<TipSelector> {
           children: [
             Text(
               'Subtotal: \$${widget.subtotal.toStringAsFixed(2)}',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontFamily: 'Ramen',
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             SizedBox(height: 12),
             SwitchListTile(
-              title: Text("Add a tip?"),
+              title: Text("Add a tip?", style: TextStyle(fontFamily: 'Ramen', fontSize: 18, fontWeight: FontWeight.w400)),
               value: addTip,
               onChanged: (value) {
                 setState(() {
@@ -139,7 +151,7 @@ class _TipSelectorState extends State<TipSelector> {
                 spacing: 8,
                 children: tipOptions.map((tip) {
                   return ChoiceChip(
-                    label: Text("$tip%"),
+                    label: Text("$tip%", style: TextStyle(fontFamily: 'Ramen', fontSize: 16, fontWeight: FontWeight.w400)),
                     selected: selectedTip == tip,
                     onSelected: (selected) {
                       setState(() {
@@ -153,7 +165,11 @@ class _TipSelectorState extends State<TipSelector> {
               SizedBox(height: 12),
               Text(
                 'Tip Amount: \$${tipAmount.toStringAsFixed(2)}',
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontFamily: 'Ramen',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ],
             SizedBox(height: 12),
@@ -162,6 +178,8 @@ class _TipSelectorState extends State<TipSelector> {
             Text(
               'Grand Total: \$${grandTotal.toStringAsFixed(2)}',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontFamily: 'Ramen',
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.green,
                   ),
@@ -196,7 +214,7 @@ class ConfirmSelection extends StatelessWidget {
             );
           });
       }, 
-      child: Text("Confirm Order"));
+      child: Text("Confirm Order", style: TextStyle(fontFamily: 'Ramen', fontSize: 18, fontWeight: FontWeight.w600)));
   }
 }
 
@@ -209,22 +227,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.blue),
+        colorScheme: ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 124, 21, 0)).copyWith(
+          primary: Color.fromARGB(255, 124, 21, 0),
+          primaryContainer: Color.fromARGB(255, 255, 224, 217),
+        ),
       ),
       home: const MyHomePage(title: 'Kammerer Ramen and Sushi Bar'),
     );
@@ -233,15 +239,6 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String title;
 
@@ -276,12 +273,23 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        toolbarHeight: 80,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(20),
+          ),
+        ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Expanded(
-              child: Text(widget.title, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              child: Text(widget.title, style: TextStyle(
+                fontFamily: 'Ramen',
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onPrimary
+                )),
             ),
             Image.asset(
               'assets/images/wave.png',
@@ -291,39 +299,58 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      body: Padding(
-        padding: EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            Card(
-              child: Column(
-                children: items.map((item) {
-                  return ListItem(
-                    iconData: item.icon,
-                    itemName: item.name,
-                    price: '\$${item.price.toStringAsFixed(2)}',
-                    quantity: item.quantity,
-                    onQuantityChanged: (newQuantity) {
-                      setState(() {
-                        item.quantity = newQuantity;
-                      });
-                    },
-                  );
-                }).toList(),
+      body: Container(
+        // decoration: BoxDecoration(
+        //   gradient: LinearGradient(
+        //     begin: Alignment.topLeft,
+        //     end: Alignment.bottomRight,
+        //     colors: [
+        //       Theme.of(context).colorScheme.primary,
+        //       Theme.of(context).colorScheme.primaryContainer,
+        //     ],
+        //   ),
+        // ),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: ListView(
+            children: [
+              Card(
+                child: Column(
+                  children: items.asMap().entries.map((entry) {
+                    final int index = entry.key;
+                    final CartItem item = entry.value;
+                    return Column(
+                      children: [
+                        ListItem(
+                          iconData: item.icon,
+                          itemName: item.name,
+                          price: '\$${item.price.toStringAsFixed(2)}',
+                          quantity: item.quantity,
+                          onQuantityChanged: (newQuantity) {
+                            setState(() {
+                              item.quantity = newQuantity;
+                            });
+                          },
+                        ),
+                        if (index < items.length - 1) Divider(), // Add a divider between items
+                          ]
+                        );
+                  }).toList(),
+                ),
               ),
-            ),
-            SizedBox(height: 15),
-            TipSelector(
-              subtotal: subtotal,
-              onTipChanged: (tipPercent) {
-                setState(() {
-                  selectedTipPercent = tipPercent;
-                });
-              },
-            ),
-            SizedBox(height: 15),
-            ConfirmSelection(),
-          ],
+              SizedBox(height: 15),
+              TipSelector(
+                subtotal: subtotal,
+                onTipChanged: (tipPercent) {
+                  setState(() {
+                    selectedTipPercent = tipPercent;
+                  });
+                },
+              ),
+              SizedBox(height: 15),
+              ConfirmSelection(),
+            ],
+          ),
         ),
       ),
     );

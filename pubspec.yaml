@@ -53,6 +53,11 @@ dev_dependencies:
 flutter:
   assets:
     - assets/images/wave.png
+  
+  fonts:
+    - family: Ramen
+      fonts:
+      - asset: assets/fonts/Chewy/Chewy-Regular.ttf
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
