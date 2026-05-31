@@ -7,15 +7,35 @@ void main() {
   runApp(const MyApp());
 }
 
+// Data model for an item
+class CartItem {
+  final String name;
+  final IconData icon;
+  final double price;
+  int quantity;
+
+  CartItem({
+    required this.name,
+    required this.icon,
+    required this.price,
+    this.quantity = 0,
+  });
+}
+
 class ListItem extends StatelessWidget {
   final IconData iconData;
   final String itemName;
   final String price;
+  final int quantity;
+  final Function(int) onQuantityChanged;
+
   const ListItem({
     super.key,
     required this.iconData,
     required this.itemName,
     required this.price,
+    required this.quantity,
+    required this.onQuantityChanged,
   });
 
   @override
@@ -24,31 +44,41 @@ class ListItem extends StatelessWidget {
       leading: Icon(iconData),
       title: Text(itemName),
       subtitle: Text(price),
-      trailing: ActionItem(),
+      trailing: ActionItem(
+        quantity: quantity,
+        onQuantityChanged: onQuantityChanged,
+      ),
     );
   }
 }
 
-class ActionItem extends StatefulWidget {
-  const ActionItem({super.key});
+class ActionItem extends StatelessWidget {
+  final int quantity;
+  final Function(int) onQuantityChanged;
 
-  @override
-  State<ActionItem> createState() => _ActionItemState();
-}
-
-class _ActionItemState extends State<ActionItem> {
-  int counter = 0;
+  const ActionItem({
+    super.key,
+    required this.quantity,
+    required this.onQuantityChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text("$counter"),
         IconButton(
           onPressed: () {
-            setState(() {});
-            counter++;
+            if (quantity > 0) {
+              onQuantityChanged(quantity - 1);
+            }
+          },
+          icon: Icon(Icons.remove),
+        ),
+        Text("$quantity"),
+        IconButton(
+          onPressed: () {
+            onQuantityChanged(quantity + 1);
           },
           icon: Icon(Icons.add),
         ),
@@ -58,8 +88,15 @@ class _ActionItemState extends State<ActionItem> {
 }
 
 class TipSelector extends StatefulWidget {
-  const TipSelector({super.key});
+  final double subtotal;
+  final Function(int) onTipChanged;
 
+  const TipSelector({
+    super.key,
+    required this.subtotal,
+    required this.onTipChanged,
+  });
+  
   @override
   State<TipSelector> createState() => _TipSelectorState();
 }
@@ -69,35 +106,69 @@ class _TipSelectorState extends State<TipSelector> {
   int selectedTip = 10;
   List<int> tipOptions = [10, 15, 20, 25];
 
+  double get tipAmount => addTip ? (widget.subtotal * selectedTip / 100) : 0;
+  double get grandTotal => widget.subtotal + tipAmount;
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SwitchListTile(
-          title: Text("Add a tip?"),
-          value: addTip,
-          onChanged: (value) {
-            setState(() {
-              addTip = value;
-            });
-          },
+    return Card( // use a card for more functionality than just a column
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Subtotal: \$${widget.subtotal.toStringAsFixed(2)}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: 12),
+            SwitchListTile(
+              title: Text("Add a tip?"),
+              value: addTip,
+              onChanged: (value) {
+                setState(() {
+                  addTip = value;
+                  if (!addTip) {
+                    widget.onTipChanged(0);
+                  }
+                });
+              },
+            ),
+            if (addTip) ...[
+              Wrap(
+                spacing: 8,
+                children: tipOptions.map((tip) {
+                  return ChoiceChip(
+                    label: Text("$tip%"),
+                    selected: selectedTip == tip,
+                    onSelected: (selected) {
+                      setState(() {
+                        selectedTip = tip;
+                        widget.onTipChanged(tip);
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+              SizedBox(height: 12),
+              Text(
+                'Tip Amount: \$${tipAmount.toStringAsFixed(2)}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+            SizedBox(height: 12),
+            Divider(), // Use divider here separate the total from the tip (additional property)
+            SizedBox(height: 12),
+            Text(
+              'Grand Total: \$${grandTotal.toStringAsFixed(2)}',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+            ),
+          ],
         ),
-        if (addTip)
-          Wrap(
-            spacing: 8,
-            children: tipOptions.map((tip) {
-              return ChoiceChip(
-                label: Text("$tip%"),
-                selected: selectedTip == tip,
-                onSelected: (selected) {
-                  setState(() {
-                    selectedTip = tip;
-                  });
-                },
-              );
-            }).toList(),
-          ),
-      ],
+      ),
     );
   }
 }
@@ -155,7 +226,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: .fromSeed(seedColor: Colors.blue),
       ),
-      home: const MyHomePage(title: 'Checkout'),
+      home: const MyHomePage(title: 'Kammerer Ramen and Sushi Bar'),
     );
   }
 }
@@ -179,22 +250,33 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  late List<CartItem> items;
+  int selectedTipPercent = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    items = [
+      CartItem(name: 'Rice Bowl', icon: Icons.rice_bowl, price: 8.99),
+      CartItem(name: 'Tea', icon: Icons.emoji_food_beverage, price: 3.99),
+      CartItem(name: 'Sushi', icon: Icons.set_meal, price: 8.99),
+      CartItem(name: 'Ramen', icon: Icons.ramen_dining, price: 12.99),
+    ];
+  }
+
+  double calculateSubtotal() {
+    return items.fold(0, (sum, item) => sum + (item.price * item.quantity));
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    double subtotal = calculateSubtotal();
+
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
       body: Padding(
@@ -203,27 +285,30 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             Card(
               child: Column(
-                children: [
-                  ListItem(
-                    iconData: Icons.local_pizza,
-                    itemName: "Pizza",
-                    price: "15.99",
-                  ),
-                  ListItem(
-                    iconData: Icons.local_cafe,
-                    itemName: "Coffee",
-                    price: "3.99",
-                  ),
-                  ListItem(
-                    iconData: Icons.icecream,
-                    itemName: "Ice Cream",
-                    price: "5.99",
-                  ),
-                ],
+                children: items.map((item) {
+                  return ListItem(
+                    iconData: item.icon,
+                    itemName: item.name,
+                    price: '\$${item.price.toStringAsFixed(2)}',
+                    quantity: item.quantity,
+                    onQuantityChanged: (newQuantity) {
+                      setState(() {
+                        item.quantity = newQuantity;
+                      });
+                    },
+                  );
+                }).toList(),
               ),
             ),
             SizedBox(height: 15),
-            Card(child: TipSelector()),
+            TipSelector(
+              subtotal: subtotal,
+              onTipChanged: (tipPercent) {
+                setState(() {
+                  selectedTipPercent = tipPercent;
+                });
+              },
+            ),
             SizedBox(height: 15),
             ConfirmSelection(),
           ],
