@@ -41,7 +41,7 @@ class ListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: CircleAvatar(
+      leading: CircleAvatar( // not covered feature to add a background color to the icon
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         child: Icon(iconData, color: Theme.of(context).colorScheme.primary, size: 26),
       ),
